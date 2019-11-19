@@ -74,7 +74,7 @@ main<-function(){
   
   # Plot by Location divided in Neighbourhood groups
   plot(longitude,latitude,col=private_room$neighbourhood_group, main = "Neighbourhood groups") 
-  legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , col=c("Red","Green","Blue","Cyan","Black"))
+  legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch=1, col=c("Red","Green","Blue","Cyan","Black"))
   
 
        
