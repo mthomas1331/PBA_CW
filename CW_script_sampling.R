@@ -111,7 +111,6 @@ p <- ggplot(NYA_rand, aes(price)) +
   geom_density(alpha = 0.3, fill = "purple")  + 
   ggtitle("Distribution of price by neighbourhood groups") +
   geom_vline(data = airbnb_nh, aes(xintercept = price), size = 2, linetype = 3) +
-  geom_text(data = airbnb_nh,y = 1.5, aes(x = price + 1400, label = paste("Mean  = £",price)), color = "darkgreen", size = 4) +
   facet_wrap(~neighbourhood_group)
 
 print(p)
