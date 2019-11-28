@@ -9,7 +9,7 @@ library(caret)
 library(glmnet)
 library(leaflet)
 library(plotly)
-
+library(class)
 NYAirbnb <- read.csv("AB_NYC_2019.csv", encoding = "UTF-8", stringsAsFactors = F, na.strings = c("")) # Reads the dataset
 
 # Why use NA Ref: https://www.statmethods.net/input/missingdata.html
@@ -127,3 +127,6 @@ ps <- ggplot(NYA_rand, aes(price)) +
 
 
 print(ps)
+
+
+
