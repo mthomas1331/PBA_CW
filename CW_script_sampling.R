@@ -17,7 +17,7 @@ NYAirbnb <- read.csv("AB_NYC_2019.csv", encoding = "UTF-8", stringsAsFactors = F
 
 #NYAirbnb <- NYAirbnb[complete.cases(NYAirbnb[,16]),] # Gets rid of the rows with latitude = NA
 
-names_to_delete <- c("id","host_id","number_of_reviews","last_reviews","reviews_per_month")
+names_to_delete <- c("id","host_id","number_of_reviews","last_review","reviews_per_month")
 NYAirbnb[names_to_delete] <- NULL 
 NYAirbnb<-NYAirbnb %>% filter(availability_365>0)
 NYAirbnb<-NYAirbnb %>% filter(price>0)
@@ -63,3 +63,31 @@ plot(longitude,latitude, col=c(c(1,2,3),c(training_data$room_type)), main = "Roo
 legend("topleft", legend=c("Entire Home","Private Rooms","Shared Rooms") , pch= 1, col=c("Red","Black","Green"))
 
 
+#------------------- Plots for Entire Home -------------------------#
+
+price<-Entire_home$price
+latitude<-Entire_home$latitude
+longitude<-Entire_home$longitude
+
+plot(longitude,latitude,col=Entire_home$neighbourhood_group, main = "Entire Homes")
+legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"))
+
+
+#------------------- Plots for Private Rooms -------------------------#
+
+price<-Private_room$price
+latitude<-Private_room$latitude
+longitude<-Private_room$longitude
+
+plot(longitude,latitude,col=Private_room$neighbourhood_group, main = "Shared Rooms")
+legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"))
+
+
+#------------------- Plots for Shared Rooms -------------------------#
+
+price<-Shared_room$price
+latitude<-Shared_room$latitude
+longitude<-Shared_room$longitude
+
+plot(longitude,latitude,col=Shared_room$neighbourhood_group, main = "Shared Rooms")
+legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"))
