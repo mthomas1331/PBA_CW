@@ -91,3 +91,11 @@ longitude<-Shared_room$longitude
 
 plot(longitude,latitude,col=Shared_room$neighbourhood_group, main = "Shared Rooms")
 legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"))
+
+#------------------- Plots for Price -------------------------#
+
+price<-training_data$price
+latitude<-training_data$latitude
+longitude<-training_data$longitude
+
+plot(longitude,latitude,col=heat.colors(price), main = "Price")
