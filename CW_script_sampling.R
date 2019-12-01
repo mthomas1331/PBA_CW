@@ -79,7 +79,7 @@ price<-Private_room$price
 latitude<-Private_room$latitude
 longitude<-Private_room$longitude
 
-plot(longitude,latitude,col=Private_room$neighbourhood_group, main = "Shared Rooms")
+plot(longitude,latitude,col=Private_room$neighbourhood_group, main = "Private Rooms")
 legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"), cex = 0.5, pt.cex = 1.5)
 
 
