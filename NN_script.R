@@ -3,9 +3,8 @@ rm(list=ls())
 # clears the console area
 cat("\014")
 
-set.seed(123)
 # install relevant libraries
-#install.packages("keras")
+#install.packages("tensorflow")
 
 #install.packages("neuralnet ")
 
@@ -38,7 +37,8 @@ library(boot)
 library(plyr)
 library(matrixStats)
 library(neuralnet)
-
+library(tensorflow)
+library(glmnet)
 
 library(nnet)
 
@@ -79,6 +79,22 @@ library(parallel)
 library(doParallel)
 
 data(neuraldat)
+#CODE ADAPTED FROM THESE SOURCES  - 
+#https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
+#https://rpubs.com/julianhatwell/
+#https://github.com/hanhanwu/Hanhan_Data_Science_Practice/blob/master/AI_Experiments/R_neural_network_basics.R
+
+
+
+
+
+#CONSTANTS - used below 
+NN_MODEL <- "NN_model_2.rds"
+NN_MODEL_ORG <-  "NN_model_1.rds"
+NN_MODEL_3 <- "NN_model_3.rds"
+NN_MODEL_10 <- "NN_model_10.rds"
+
+set.seed(300)
 
 ANN_neural_network<-function(dataset){
   #predictor variable must scaled data for neural network 
@@ -105,14 +121,24 @@ ANN_neural_network<-function(dataset){
   #print(train_names)
   #neuralnet library doesn't accept ~. notation so formula is used
   dataset.formula <- as.formula(paste("NYA_dataset.price ~", paste(train_names[!train_names %in% "NYA_dataset.price"], collapse = " + ")))
+  set.seed(300)
   
-  ##Neural network preforms here 
-  print("START NEURAL NETWORK")
-  dataset.nn.5.3 <- neuralnet(dataset.formula, data = dataset.train.scaled, hidden = 3, linear.output = FALSE)
-  print("END NEURAL NETWORK")
+  #saveRDS(NN_model, "NN_model_2.rds") # code to save model to save time
+  if (file.exists(NN_MODEL_ORG)) {
+    print("Loading neural network model file")
+    #load(NNMODEL)
+    dataset.nn.5.3 <- readRDS(NN_MODEL_ORG)
+  } else {
+    ##Neural network preforms here 
+    print("START NEURAL NETWORK")
+    dataset.nn.5.3 <- neuralnet(dataset.formula, data = dataset.train.scaled, hidden = 3, linear.output = FALSE)
+    print("END NEURAL NETWORK")
+    saveRDS(dataset.nn.5.3, "NN_model_1.rds") #code to save model to save time
+  }
+  
   #Performance metrics 
   plot(dataset.nn.5.3)
-
+  
   dataset.5.3.preds.scaled <- neuralnet::compute(dataset.nn.5.3, dataset.test.scaled)
   dataset.price.unscaled <- (dataset.test.scaled$price) * (max.price - min.price) + min.price
   dataset.5.3.preds <- dataset.5.3.preds.scaled$net.result * (max(dataset$NYA_dataset.price) -
@@ -128,76 +154,101 @@ ANN_neural_network<-function(dataset){
   print(paste("MSE = ", MSE_value))
   #dataset.MSE <- data.frame(dataset.5.3.preds, dataset.price.unscaled)
   plot(dataset.test.scaled$NYA_dataset.price, dataset.5.3.preds, 
-       col="red", main = "Real vs predicted NN\ntwo hidden layers",
+       col="red", main = "Real test vs predicted ",
        pch=1, cex=0.7, xlab = "actual value", ylab = "predicted value")
-  line.fit <- lm(dataset.formula, data = dataset.train.scaled)
-  abline(line.fit)
+  #line.fit <- lm(dataset.formula, data = dataset.train.scaled)
+  #abline(line.fit)
+  abline(0,1,lwd=2)
   
   #cross-validation using caret
   print("Caret model cross-validation")
   model.nn <- caret::train(NYA_dataset.price~., data = dataset.train.scaled, method = "nnet", preProc = c("center", "scale"))
-  #(model.nn)
-  
-  #fast cross validation 
-  set.seed(200)
-  lm.fit <- glm(NYA_dataset.price~., data = dataset)
-  cross_val<- cv.glm(dataset, lm.fit, K = 10)$delta[1]
-  print("Cross_validation single result:")
-  print(cross_val)
-  set.seed(450)
-  cv.error<- NULL
-  k<-10
-  pbar<- create_progress_bar('text')
-  pbar$init(5)
-  for (i in 1:k) {
-    index <- sample(1:nrow(dataset), round(0.7 * nrow(dataset)))
-    train.cv <- dataset.scaled[index,]
-    test.cv <- dataset.scaled[-index,]
-    nn <- neuralnet(dataset.formula, data = train.cv, hidden = 3, linear.output = F)
-    pr.nn <- neuralnet::compute(nn, test.cv[,1:4])
-    pr.nn <- pr.nn$net.result * (max(dataset$NYA_dataset.price) - min(dataset$NYA_dataset.price)) + 
-      min(dataset$NYA_dataset.price)
-    test.cv.r <- (test.cv$NYA_dataset.price) * (max(dataset$NYA_dataset.price) - min(dataset$NYA_dataset.price)) + 
-      min(dataset$NYA_dataset.price)
-    cv.error[i] <- sum((test.cv.r - pr.nn)^2)/nrow(test.cv)
-    pbar$step()
-  }
-  print("Mean Cross-Validation results")
-  mean_cv <- mean(cv.error)
-  print(mean_cv)
-  boxplot(cv.error, xlab = "MSE CV", col = 'cyan', border = 'blue', 
-          names = 'CV error (MSE)', main = 'CV error (MSE) for NN', horizontal = TRUE)
-  
+  print(model.nn$results)
+  print("CROSS VALIDATION WITH CARET END")
+  # 
+  # #fast cross validation 
+  # set.seed(300)
+  # lm.fit <- glm(NYA_dataset.price~., data = dataset)
+  # cross_val<- cv.glm(dataset, lm.fit, K = 10)$delta[1]
+  # print("Cross_validation single result:")
+  # print(cross_val)
+  # cv.error<- NULL
+  # k<-10
+  # pbar<- create_progress_bar('text')
+  # pbar$init(5)
+  # for (i in 1:k) {
+  #   index <- sample(1:nrow(dataset), round(0.7 * nrow(dataset)))
+  #   train.cv <- dataset.scaled[index,]
+  #   test.cv <- dataset.scaled[-index,]
+  #   nn <- neuralnet(dataset.formula, data = train.cv, hidden = 3, linear.output = F)
+  #   pr.nn <- neuralnet::compute(nn, test.cv[,1:4])
+  #   pr.nn <- pr.nn$net.result * (max(dataset$NYA_dataset.price) - min(dataset$NYA_dataset.price)) + 
+  #     min(dataset$NYA_dataset.price)
+  #   test.cv.r <- (test.cv$NYA_dataset.price) * (max(dataset$NYA_dataset.price) - min(dataset$NYA_dataset.price)) + 
+  #     min(dataset$NYA_dataset.price)
+  #   cv.error[i] <- sum((test.cv.r - pr.nn)^2)/nrow(test.cv)
+  #   pbar$step()
+  # }
+  # print("Mean Cross-Validation results")
+  # mean_cv <- mean(cv.error)
+  # print(mean_cv)
+  # boxplot(cv.error, xlab = "MSE CV", col = 'cyan', border = 'blue', 
+  #         names = 'CV error (MSE)', main = 'CV error (MSE) for NN', horizontal = TRUE)
+  # 
 }
 
-linear_model<-function(dataset){
-  dataset.scaled <- as.data.frame(scale(dataset))
-  glimpse(dataset.scaled)
+test_NN <- function(dataset) {
+  
+  index <- createDataPartition(dataset$price, p = 0.7, list = FALSE)
+  train_data <- dataset[index,]
+  glimpse(train_data)
+  test_data <- dataset[-(index),]
+  glimpse(test_data)
+  max_val <- apply(dataset,2,max)
+  min_val <- apply(dataset, 2, min)
+  dataset_scaled <- as.data.table(scale(dataset, center = min_val, 
+                                        scale = max_val - min_val))
+  #print(summarizeColumns(dataset_scaled))
+  #glimpse(dataset_scaled)
+  
+  trainNN <- dataset_scaled[index,]
+  testNN <- dataset_scaled[-index,]
+  
+  set.seed(300)
+ 
+  #saveRDS(NN_model, "NN_model_2.rds") # code to save model to save time
+  if (file.exists(NN_MODEL_10)) {
+    print("Loading neural network model file")
+    #load(NNMODEL)
+    NN_model <- readRDS(NN_MODEL_10)
+  } else {
+    print("Start neural network")
+    NN_model <- neuralnet(price ~ latitude + longitude + room_type + minimum_nights + availability_365,
+    trainNN, hidden = 10, linear.output = F)
+    print("END of neural network")
+    saveRDS(NN_model, "NN_model_10.rds") #code to save model to save time
+  }
 
-  min.price <- min(dataset$NYA_dataset.price)
-  #print(min.price)
-  max.price <- max(dataset$NYA_dataset.price)
-  #print(max.price)
-  dataset.scaled$NYA_dataset.price <- scale(dataset$NYA_dataset.price, center = min.price, scale = max.price - min.price)
-  #glimpse(dataset.scaled)
-  #Train-test split 
-  #index<-sample(1:nrow(dataset),round(0.70*nrow(dataset)))
-  dataset.split <- sample.split(dataset$NYA_dataset.price, SplitRatio = 0.7)
-  dataset.train.scaled <- dataset.scaled[dataset.split, ]
-  dataset.test.scaled <- dataset.scaled[!dataset.split, ]
   
-  #formula 
-  train_names <- names(dataset.train.scaled)
-  print(train_names)
-  dataset.formula <- as.formula(paste("NYA_dataset.price ~", paste(train_names[!train_names %in% "NYA_dataset.price"], collapse = " + ")))
+  plot(NN_model)
+  predict_NN <- neuralnet::compute(NN_model, testNN[,c(1:3,5:6)])
+  unscaled_predict_NN<- predict_NN$net.result * (max(dataset$price) - min(dataset$price)) + 
+    min(dataset$price)
   
-  fit_lm <- lm(dataset.formula, data = dataset.train.scaled)
-  temp_test <- predict(fit_lm,dataset.test.scaled)
-  plot(dataset.test.scaled[["latitude"]],temp_test, xlab = "latitude",ylab = "predicted")
+  ##plot prediction and test values 
+  plot(test_data$price, unscaled_predict_NN, col = 'blue', pch = 4, ylab = "Prediction result", xlab = "Test value")
+  abline(10,1,lwd=2)
+  RMSE_NN <- sqrt(sum(test_data$price - unscaled_predict_NN)^2) / nrow(test_data)
+  print(paste("ROOT MEAN SQUARE ERROR: " ,RMSE_NN)) # Root MEAN SQUARE ERROR 
+  
+  #Cross validation to find best model 
+  set.seed(300)
+  dataset_RMSE <- glm(price~., data = dataset)
+  cv_RMSE <- cv.glm(dataset, dataset_RMSE, cost = RMSE, K = 10)$delta[1]
+  print(paste("CROSS_VALIDATION RMSE: ", cv_RMSE))
   
   
-  
-  
+  #Fast cross validation 
 }
 
 main<-function(){
@@ -237,11 +288,21 @@ NYA_dataset[names_to_delete] <- NULL
 #glimpse(NYA_dataset) #should be 6 columns at this point 
 names_to_use <- c("room_type")
 NYA_dataset[names_to_use]<-map(NYA_dataset[names_to_use], as.factor)
-#Hot one encoding the room types
-#encoding_onehot<-one_hot(as.data.table(NYA_dataset$room_type))
-#encoding_onehot<-setDF(encoding_onehot)
-#NYA_dataset<- data.frame(NYA_dataset,encoding_onehot)
-#glimpse(NYA_dataset)
+
+
+#Using numeric to turn the rpom types to numeric values ~~~~~~~
+NYA_numeric <- NYA_dataset
+NYA_numeric[,3]<-as.numeric(NYA_numeric[,3]) - 1
+#glimpse(NYA_numeric)
+NYA_matrix <- as.matrix(NYA_numeric)
+#glimpse(NYA_matrix)
+dimnames(NYA_matrix) <- NULL
+#print(NYA_matrix)
+#NYA_matrix_norm <- tensorflow::normalize(NYA_matrix)
+#glimpse(NYA_matrix_norm)
+checkNN<-test_NN(NYA_numeric) #Code here for best neural network 
+
+#END OF ALTERNTIVE TESTING ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 NYA_dataset[names_to_use]<-NULL
 #glimpse(NYA_dataset)
 
@@ -252,8 +313,7 @@ NYA_dataset[c("price")]<-NULL
 #glimpse(NYA_dataset)
 NYA_normalise<-data.frame(NYA_dataset,price)
 
-#linearModel<-linear_model(NYA_normalise)
-NeuralNetwork<-ANN_neural_network(NYA_normalise)
+#NeuralNetwork<-ANN_neural_network(NYA_normalise) # Original neural network 
 }
 
 main()
