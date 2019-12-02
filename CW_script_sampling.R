@@ -1,6 +1,6 @@
 set.seed(123)
 
-library("ggplot2")
+library(ggplot2)
 library(dplyr)
 library(tidyverse)
 library(GGally)
@@ -11,6 +11,8 @@ library(leaflet)
 library(plotly)
 library(class)
 library(scatterplot3d)
+
+source("plot_functions.R")
 
 NYAirbnb <- read.csv("AB_NYC_2019.csv", encoding = "UTF-8", stringsAsFactors = F, na.strings = c("")) # Reads the dataset
 
@@ -27,11 +29,18 @@ NYAirbnb<-NYAirbnb %>% filter(price>0)
 names_to_factor<-c("host_name","neighbourhood_group","neighbourhood","room_type")
 NYAirbnb[names_to_factor]<-map(NYAirbnb[names_to_factor], as.factor)
 
+M <- NYAirbnb[,sapply(NYAirbnb, is.numeric)]
+M <- M[complete.cases(M),]
+corr_matr <- cor(M,method = "pearson")
+corrplot(corr_matr, method = "color")
+
+
+
 
 lon <- NYAirbnb$longitude
 lat <- NYAirbnb$latitude
 price <- NYAirbnb$price
-scatterplot3d(lon, lat, price, main = "3D Scatter Plot", xlab =   "Longitude", ylab = "Latitude", zlab = "Price")
+plot_3d(lon,lat,price)
 
 #-------------Getting rid of outliers--------------------#
 lq = quantile(NYAirbnb$price)[2] #lower quartile
@@ -58,7 +67,7 @@ testing_data<-anti_join(NYA_rand, training_data
 lon <- NYA_rand$longitude
 lat <- NYA_rand$latitude
 price <- NYA_rand$price
-scatterplot3d(lon, lat, price, main = "3D Scatter Plot with no Outliers", xlab =   "Longitude", ylab = "Latitude", zlab = "Price")
+plot_3d(lon,lat,price)
 
 
 # Generates subsets based on room_type
@@ -73,9 +82,7 @@ latitude<-training_data$latitude
 longitude<-training_data$longitude
 room_type<-training_data$room_type
 
-plot(longitude,latitude, col=c(c(1,2,3),c(training_data$room_type)), main = "Room Type")
-legend("topleft", legend=c("Entire Home","Private Rooms","Shared Rooms") , pch= 1, col=c("Red","Black","Green"), cex = 0.75, pt.cex = 1.5)
-
+scatter(longitude,latitude,training_data$room_type,"Room Type", "Room")
 
 #------------------- Plots for Entire Home -------------------------#
 
@@ -83,19 +90,14 @@ price<-Entire_home$price
 latitude<-Entire_home$latitude
 longitude<-Entire_home$longitude
 
-plot(longitude,latitude,col=Entire_home$neighbourhood_group, main = "Entire Homes")
-legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"), cex = 0.75, pt.cex = 1.5)
-
-
+scatter(longitude, latitude, Entire_home$neighbourhood_group, "Entire Home", "Neighbourhood")
 #------------------- Plots for Private Rooms -------------------------#
 
 price<-Private_room$price
 latitude<-Private_room$latitude
 longitude<-Private_room$longitude
 
-plot(longitude,latitude,col=Private_room$neighbourhood_group, main = "Private Rooms")
-legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"), cex = 0.75, pt.cex = 1.5)
-
+scatter(longitude,latitude,Private_room$neighbourhood_group,"Private Rooms", "Neighbourhood")
 
 #------------------- Plots for Shared Rooms -------------------------#
 
@@ -104,57 +106,49 @@ latitude<-Shared_room$latitude
 longitude<-Shared_room$longitude
 
 plot(longitude,latitude,col=Shared_room$neighbourhood_group, main = "Shared Rooms")
-legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"), cex = 0.75, pt.cex = 1.5)
-
+neighbourhood_leg()
+scatter(longitude,latitude,Shared_room$neighbourhood_group,"Shared Rooms", "Neighbourhood")
 #------------------- Plots for Price -------------------------#
 
 price<-training_data$price
 latitude<-training_data$latitude
 longitude<-training_data$longitude
 
-plot(longitude,latitude,col=heat.colors(price), main = "Price")
-
+scatter(longitude,latitude,heat.colors(price),"Price", "")
 
 #-----------------------------Distribution Code----------------------#
-airbnb_nh <- NYA_rand %>%
+mean_ng <- NYA_rand %>%
   group_by(neighbourhood_group) %>%
   summarise(price = round(mean(price), 2))
 
-p <- ggplot(NYA_rand, aes(price)) + 
-  geom_histogram(bins = 30, aes(y = ..density..), fill = "purple") + 
-  geom_density(alpha = 0.3, fill = "purple")  + 
-  ggtitle("Distribution of price by neighbourhood groups") +
-  geom_vline(data = airbnb_nh, aes(xintercept = price), size = 2, linetype = 3) +
-  facet_wrap(~neighbourhood_group)
-
+p <- dist(NYA_rand,mean_ng,~neighbourhood_group)
 print(p)
 
-ps <- ggplot(NYA_rand, aes(price)) + 
-  geom_histogram(bins = 30, aes(y = ..density..), fill = "purple") + 
-  geom_density(alpha = 0.3, fill = "purple")  + 
-  ggtitle("Distribution of price by neighbourhood groups",
-          subtitle = expression("With" ~'log'[10] ~ "transformation of x-axis")) +
-  geom_vline(data = airbnb_nh, aes(xintercept = price), size = 2, linetype = 3) +
-  geom_text(data = airbnb_nh,y = 2, aes(x = price + 140 , label = paste("Mean  = £",price)), color = "darkgreen", size = 4) +
-  facet_wrap(~neighbourhood_group) + scale_x_log10() 
+ng_mean <- log_dist(NYA_rand, mean_ng, "Mean= £",~neighbourhood_group)
+print(ng_mean)
 
-print(ps)
-
-median <- NYA_rand %>%
+median_ng <- NYA_rand %>%
   group_by(neighbourhood_group) %>%
   summarise(price = round(median.default(price),2))
 
-md <- ggplot(NYA_rand, aes(price)) + 
-  geom_histogram(bins = 30, aes(y = ..density..), fill = "purple") + 
-  geom_density(alpha = 0.3, fill = "purple")  + 
-  ggtitle("Distribution of price by neighbourhood groups",
-          subtitle = expression("With" ~'log'[10] ~ "transformation of x-axis")) +
-  geom_vline(data = median, aes(xintercept = price), size = 2, linetype = 3) +
-  geom_text(data = median,y = 2, aes(x = price + 90 , label = paste("Median  = £",price)), color = "darkgreen", size = 4) +
-  facet_wrap(~neighbourhood_group) + scale_x_log10()
+ng_median <- log_dist(NYA_rand, median_ng, "Median= £",~neighbourhood_group)
+print(ng_median)
 
-print(md)
 
+mean_rt <- NYA_rand %>%
+  group_by(room_type) %>%
+  summarise(price = round(mean(price),2))
+
+rt_mean <- log_dist(NYA_rand, mean_rt, "Mean= £", ~room_type)
+print(rt_mean)
+
+median_rt <- NYA_rand %>%
+  group_by(room_type) %>%
+  summarise(price = round(median.default(price),2))
+
+
+rt_median <- log_dist(NYA_rand, median_rt, "Median= £", ~room_type)
+print(rt_median)
 
 
 
