@@ -79,10 +79,6 @@ library(parallel)
 library(doParallel)
 
 data(neuraldat)
-#CODE ADAPTED FROM THESE SOURCES  - 
-#https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
-#https://rpubs.com/julianhatwell/
-#https://github.com/hanhanwu/Hanhan_Data_Science_Practice/blob/master/AI_Experiments/R_neural_network_basics.R
 
 
 
@@ -93,8 +89,9 @@ NN_MODEL <- "NN_model_2.rds"
 NN_MODEL_ORG <-  "NN_model_1.rds"
 NN_MODEL_3 <- "NN_model_3.rds"
 NN_MODEL_10 <- "NN_model_10.rds"
+NN_MODEL_TEST <-  "NN_model_test.rds"
 
-set.seed(300)
+set.seed(123)
 
 ANN_neural_network<-function(dataset){
   #predictor variable must scaled data for neural network 
@@ -121,7 +118,7 @@ ANN_neural_network<-function(dataset){
   #print(train_names)
   #neuralnet library doesn't accept ~. notation so formula is used
   dataset.formula <- as.formula(paste("NYA_dataset.price ~", paste(train_names[!train_names %in% "NYA_dataset.price"], collapse = " + ")))
-  set.seed(300)
+  set.seed(123)
   
   #saveRDS(NN_model, "NN_model_2.rds") # code to save model to save time
   if (file.exists(NN_MODEL_ORG)) {
@@ -131,7 +128,7 @@ ANN_neural_network<-function(dataset){
   } else {
     ##Neural network preforms here 
     print("START NEURAL NETWORK")
-    dataset.nn.5.3 <- neuralnet(dataset.formula, data = dataset.train.scaled, hidden = 3, linear.output = FALSE)
+    dataset.nn.5.3 <- neuralnet(dataset.formula, data = dataset.train.scaled, hidden = 3, linear.output = FALSE, err.fct = "sse")
     print("END NEURAL NETWORK")
     saveRDS(dataset.nn.5.3, "NN_model_1.rds") #code to save model to save time
   }
@@ -160,14 +157,14 @@ ANN_neural_network<-function(dataset){
   #abline(line.fit)
   abline(0,1,lwd=2)
   
-  #cross-validation using caret
-  print("Caret model cross-validation")
-  model.nn <- caret::train(NYA_dataset.price~., data = dataset.train.scaled, method = "nnet", preProc = c("center", "scale"))
-  print(model.nn$results)
-  print("CROSS VALIDATION WITH CARET END")
+  # #cross-validation using caret
+  # print("Caret model cross-validation")
+  # model.nn <- caret::train(NYA_dataset.price~., data = dataset.train.scaled, method = "nnet", preProc = c("center", "scale"))
+  # print(model.nn$results)
+  # print("CROSS VALIDATION WITH CARET END")
   # 
   # #fast cross validation 
-  # set.seed(300)
+  # set.seed(123)
   # lm.fit <- glm(NYA_dataset.price~., data = dataset)
   # cross_val<- cv.glm(dataset, lm.fit, K = 10)$delta[1]
   # print("Cross_validation single result:")
@@ -214,24 +211,35 @@ test_NN <- function(dataset) {
   trainNN <- dataset_scaled[index,]
   testNN <- dataset_scaled[-index,]
   
-  set.seed(300)
+  set.seed(123)
  
   #saveRDS(NN_model, "NN_model_2.rds") # code to save model to save time
-  if (file.exists(NN_MODEL_10)) {
+  # if (file.exists(NN_MODEL)) {
+  #   print("Loading neural network model file")
+  #   #load(NNMODEL)
+  #   NN_model <- readRDS(NN_MODEL)
+  # } else {
+  #   print("Start neural network")
+  #   NN_model <- neuralnet(price ~ latitude + longitude + room_type + minimum_nights + availability_365,
+  #   trainNN, hidden = 3, linear.output = F)
+  #   print("END of neural network")
+  #   saveRDS(NN_model, "NN_model_2.rds") #code to save model to save time
+  # }
+
+  if (file.exists(NN_MODEL_TEST)) {
     print("Loading neural network model file")
     #load(NNMODEL)
-    NN_model <- readRDS(NN_MODEL_10)
+    NN_model <- readRDS(NN_MODEL_TEST)
   } else {
     print("Start neural network")
-    NN_model <- neuralnet(price ~ latitude + longitude + room_type + minimum_nights + availability_365,
-    trainNN, hidden = 10, linear.output = F)
+    NN_model <- neuralnet(price ~ latitude + longitude + minimum_nights + availability_365,
+                          trainNN, hidden = 3, linear.output = F, err.fct = "sse")
     print("END of neural network")
-    saveRDS(NN_model, "NN_model_10.rds") #code to save model to save time
+    saveRDS(NN_model, "NN_model_test.rds") #code to save model to save time
   }
-
   
   plot(NN_model)
-  predict_NN <- neuralnet::compute(NN_model, testNN[,c(1:3,5:6)])
+  predict_NN <- neuralnet::compute(NN_model, testNN[,c(1:2,5:6)])
   unscaled_predict_NN<- predict_NN$net.result * (max(dataset$price) - min(dataset$price)) + 
     min(dataset$price)
   
@@ -242,12 +250,12 @@ test_NN <- function(dataset) {
   print(paste("ROOT MEAN SQUARE ERROR: " ,RMSE_NN)) # Root MEAN SQUARE ERROR 
   
   #Cross validation to find best model 
-  set.seed(300)
+  set.seed(123)
   dataset_RMSE <- glm(price~., data = dataset)
   cv_RMSE <- cv.glm(dataset, dataset_RMSE, cost = RMSE, K = 10)$delta[1]
   print(paste("CROSS_VALIDATION RMSE: ", cv_RMSE))
   
-  
+  print(summary(NN_model))
   #Fast cross validation 
 }
 
@@ -300,7 +308,7 @@ dimnames(NYA_matrix) <- NULL
 #print(NYA_matrix)
 #NYA_matrix_norm <- tensorflow::normalize(NYA_matrix)
 #glimpse(NYA_matrix_norm)
-checkNN<-test_NN(NYA_numeric) #Code here for best neural network 
+#checkNN<-test_NN(NYA_numeric) #Code here for best neural network 
 
 #END OF ALTERNTIVE TESTING ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 NYA_dataset[names_to_use]<-NULL
@@ -313,7 +321,7 @@ NYA_dataset[c("price")]<-NULL
 #glimpse(NYA_dataset)
 NYA_normalise<-data.frame(NYA_dataset,price)
 
-#NeuralNetwork<-ANN_neural_network(NYA_normalise) # Original neural network 
+NeuralNetwork<-ANN_neural_network(NYA_normalise) # Original neural network 
 }
 
 main()
