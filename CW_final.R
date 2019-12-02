@@ -30,77 +30,14 @@ NEIGHBOURHOOD <- "neighbourhood"
 DATA_SPLIT <- 0.7
 NN_MODEL_TEST <- "NN_model_test.rds"
 NN_MODEL_5H <- "NN_model_5H.rds"
-
-#Initial Neural Network - didn't work out so using updated one below 
-# neural_network <- function(dataset){
-#   #predictor variable must scaled data for neural network 
-#   dataset_scaled <- as.data.frame(scale(dataset))
-#   
-#   min_price <- min(dataset$NYA_dataset_price)
-# 
-#   max_price <- max(dataset$NYA_dataset_price)
-#   
-#   dataset_scaled$NYA_dataset_price <- scale(dataset$NYA_dataset_price, center = min_price, scale = max_price - min_price)
-# 
-#   #Train-test split 
-#   #index<-sample(1:nrow(dataset),round(0.70*nrow(dataset)))
-#   dataset_split <- sample.split(dataset$NYA_dataset_price, SplitRatio = DATA_SPLIT)
-#   dataset_train_scaled <- dataset_scaled[dataset_split, ]
-#   dataset_test_scaled <- dataset_scaled[!dataset_split, ]
-# 
-#   train_names <- names(dataset_train_scaled)
-#   #print(train_names)
-#   #neuralnet library doesn't accept ~. notation so formula is used
-#   NN_formula <- as.formula(paste("NYA_dataset_price ~", paste(train_names[!train_names %in% "NYA_dataset_price"], collapse = " + ")))
-#   set.seed(123)
-#   
-#   #saveRDS(NN_model, "NN_model_2.rds") # code to save model to save time
-#   if (file.exists(NN_MODEL_ORG)) {
-#     print("Loading neural network model file")
-#     #load(NNMODEL)
-#     dataset_nn_3 <- readRDS(NN_MODEL_ORG)
-#   } else {
-#     ##Neural network preforms here 
-#     print("START NEURAL NETWORK")
-#     dataset_nn_3 <- neuralnet(NN_formula, data = dataset_train_scaled, hidden = 3, linear.output = FALSE, err.fct = "sse")
-#     print("END NEURAL NETWORK")
-#     saveRDS(dataset_nn_3, "NN_model_1.rds") #code to save model to save time
-#   }
-#   
-#   #Performance metrics 
-#   plot(dataset_nn_3)
-#   
-#   dataset_pred_scaleds <- neuralnet::compute(dataset_nn_3, dataset_test_scaled)
-#   dataset_price_unscaled <- (dataset_test_scaled$price) * (max_price - min_price) + min_price
-#   dataset_pred <- dataset_pred_scaleds$net.result * (max(dataset$NYA_dataset_price) -
-#                                                                 min(dataset$NYA_dataset_price)) + min(dataset$NYA_dataset_price)
-#   
-#   #glimpse(dataset_pred)
-#   print(dataset_price_unscaled)
-#   #Calculate MSE
-#   #dataset.MSE <- reg.measures(dataset_pred, dataset_price_unscaled)
-#   MSE_value <- sum((dataset_price_unscaled - dataset_pred)^2)/nrow(dataset_test_scaled)
-#   print(sum(dataset_price_unscaled - dataset_pred))
-#   print("#########")
-#   print(paste("MSE = ", MSE_value))
-#   #dataset.MSE <- data.frame(dataset_pred, dataset_price_unscaled)
-#   plot(dataset_test_scaled$NYA_dataset_price, dataset_pred, 
-#        col="red", main = "Real test vs predicted ",
-#        pch=1, cex=0.7, xlab = "actual value", ylab = "predicted value")
-#   #line.fit <- lm(NN_formula, data = dataset_train_scaled)
-#   #abline(line.fit)
-#   abline(0,1,lwd=2)
-#   
-#   #cross-validation using caret
-#   print("Caret model cross-validation")
-#   model.nn <- caret::train(NYA_dataset_price~., data = dataset_train_scaled, method = "nnet", preProc = c("center", "scale"))
-#   print(model.nn$results)
-#   print("CROSS VALIDATION WITH CARET END")
-# }
+MODEL_NN_1 <- "Model_NN_1.rds"
+MODEL_NN_2 <- "Model_NN_2.rds"
 
 #This code has been adapted to suit this dataset 
-#source used here  - https://rpubs.com/julianhatwell/annr
-
+#sources used here:  
+#https://rpubs.com/julianhatwell/annr
+#https://github.com/hanhanwu/Hanhan_Data_Science_Practice/blob/master/AI_Experiments/R_neural_network_basics.R
+#https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
 neural_network_2  <- function(dataset) {
   index <- createDataPartition(dataset$price, p = DATA_SPLIT, list = FALSE)
   train_data <- dataset[index,]
@@ -118,58 +55,65 @@ neural_network_2  <- function(dataset) {
   testNN <- dataset_scaled[-index,]
   
   set.seed(123)
-  
-  #saveRDS(NN_model, "NN_model_2.rds") # code to save model to save time
-  if (file.exists(NN_MODEL_5H)) {
+  # code to save model to save time 
+  if (file.exists(MODEL_NN_1)) {
     print("Loading neural network model file")
     #load(NNMODEL)
-    NN_model <- readRDS(NN_MODEL_5H)
+    NN_model <- readRDS(MODEL_NN_1)
     plot(NN_model)
   } else {
     print("Start neural network")
     NN_model <- neuralnet(price ~ latitude + longitude + room_type + minimum_nights + availability_365,
-    trainNN, hidden = 5, linear.output = F)
-    print("END of neural network")
-    saveRDS(NN_model, "NN_model_5H.rds") #code to save model to save time
-  }
-  
-  if (file.exists(NN_MODEL_TEST)) {
-    print("Loading neural network model file")
-    NN_model <- readRDS(NN_MODEL_TEST)
-    plot(NN_model)
-  } else {
-    print("Start neural network")
-    NN_model <- neuralnet(price ~ latitude + longitude + minimum_nights + availability_365,
                           trainNN, hidden = 3, linear.output = F)
     print("END of neural network")
-    saveRDS(NN_model, "NN_model_test.rds") #code to save model to save time
+    saveRDS(NN_model, "Model_NN_1.rds") #code to save model to save time
+    plot(NN_model)
+  }
+  #Another neural network - without room_type as a factor 
+  if (file.exists(MODEL_NN_2)) {
+    print("Loading neural network model file")
+    NN_model_2 <- readRDS(MODEL_NN_2)
+    plot(NN_model_2)
+  } else {
+    print("Start neural network")
+    NN_model_2 <- neuralnet(price ~ latitude + longitude + minimum_nights + availability_365,
+                          trainNN, hidden = 3, linear.output = F)
+    print("END of neural network")
+    saveRDS(NN_model_2, "Model_NN_2.rds") #code to save model to save time
+    plot(NN_model_2)
   }
   
+  #Performance measure for first neural network 
   plot(NN_model)
   predict_NN <- neuralnet::compute(NN_model, testNN[,c(1:3,5:6)])
   unscaled_predict_NN<- predict_NN$net.result * (max(dataset$price) - min(dataset$price)) + 
     min(dataset$price)
   
   ##plot prediction and test values 
-  plot(test_data$price, unscaled_predict_NN, col = 'blue', pch = 4, ylab = "Prediction result", xlab = "Test value")
-  abline(09,1,lwd=2)
+  plot(test_data$price, unscaled_predict_NN, col = 'blue', pch = 4, ylab = "Prediction values", xlab = "Real values")
+  abline(0,1,lwd=2)
   RMSE_NN <- sqrt(sum(test_data$price - unscaled_predict_NN)^2) / nrow(test_data)
-  print(paste("ROOT MEAN SQUARE ERROR: " ,RMSE_NN)) # Root MEAN SQUARE ERROR 
+  print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK: " ,RMSE_NN)) # Root MEAN SQUARE ERROR 
   
-  #Cross validation to find best model 
-  set.seed(123)
-  dataset_RMSE <- glm(price~., data = dataset)
-  cv_RMSE <- cv.glm(dataset, dataset_RMSE, cost = RMSE, K = 10)$delta[1]
-  print(paste("CROSS_VALIDATION RMSE: ", cv_RMSE))
+  #Performance measure for second neural network
+  plot(NN_model_2)
+  predict_NN_2 <- neuralnet::compute(NN_model_2, testNN[,c(1:2,5:6)])
+  unscaled_predict_NN_2<- predict_NN_2$net.result * (max(dataset$price) - min(dataset$price)) + 
+    min(dataset$price)
   
-  #print(summary(NN_model))
+  ##plot prediction and test values 
+  plot(test_data$price, unscaled_predict_NN_2, col = 'red', pch = 4, ylab = "Prediction values", xlab = "Real values")
+  abline(0,1,lwd=2)
+  RMSE_NN_2 <- sqrt(sum(test_data$price - unscaled_predict_NN_2)^2) / nrow(test_data)
+  print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK 2: " ,RMSE_NN_2)) # Root MEAN SQUARE ERROR 
+  
 }
 
 #kNN algorithm ###
 #Code used from the source
 #source - https://www.edureka.co/blog/knn-algorithm-in-r/
 knn_model <- function(dataset) {
-
+  set.seed(123)
   NYA_rand <- dataset
   NYA_rand.subset <- NYA_rand[c('price', 'latitude', 'longitude')]
   
@@ -177,9 +121,8 @@ knn_model <- function(dataset) {
     return ((x - min(x)) / (max(x) - min(x))) }
   
   NYA_rand.subset.n <- as.data.frame(lapply(NYA_rand.subset[,2:3], normalize))
-  
-  set.seed(111)
-  dat.d <- sample(1:nrow(NYA_rand.subset.n), size=nrow(NYA_rand.subset.n)*0.7, replace=FALSE)
+
+  dat.d <- sample(1:nrow(NYA_rand.subset.n), size=nrow(NYA_rand.subset.n)*DATA_SPLIT, replace=FALSE)
   
   train.NYA_rand <- NYA_rand.subset[dat.d,]
   test.NYA_rand <-NYA_rand.subset[-dat.d,]
@@ -261,9 +204,9 @@ main <- function() {
   #print(NYA_matrix)
   #NYA_matrix_norm <- tensorflow::normalize(NYA_matrix)
   #glimpse(NYA_matrix_norm)
-  print("START NEURAL NETWORK 2")
+
   NN_second<-neural_network_2(NYA_numeric) #Code here for best neural network 
-  print("END OF NEURAL NETWORK 2")
+  
   #END OF ALTERNTIVE TESTING ~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   #~~~~CALL TO ORIGINAL NEURAL NETWORK FUNCTION~~~~~~~~~~~~~~~~#
@@ -289,11 +232,6 @@ print("Start of program")
 set.seed(123)
 main()
 print("END of program")
-
-
-
-
-
 
 ### CODE ADAPTED FROM THESE SOURCES  - 
 #https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
