@@ -4,9 +4,13 @@
 #
 # This function will plot a scatter graph with a legend
 #
-# INPUT :  double  - lon  -  Longitude of Airbnb accomodation 
-#       :  double  - lat  -  Latitude of Airnbn accomodation
-#       :  integer - type -      
+# INPUT   :  double   - lon  -  Longitude of Airbnb accomodation 
+#         :  double   - lat  -  Latitude of Airnbn accomodation
+#         :  integer  - type -  How is data in scatter graph is split
+#         :  function - leg  -  Specifies which legend should show in the graph
+#
+# OUTPUT  :  Scatter graph
+
 scatter <- function(lon,lat,type,title, leg){
   plot(x = lon,y = lat, col = type, main = title)
   if(leg == "Neighbourhood") {
