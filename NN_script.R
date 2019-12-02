@@ -257,6 +257,8 @@ test_NN <- function(dataset) {
   
   print(summary(NN_model))
   #Fast cross validation 
+  
+  
 }
 
 main<-function(){
@@ -297,7 +299,7 @@ NYA_dataset[names_to_delete] <- NULL
 names_to_use <- c("room_type")
 NYA_dataset[names_to_use]<-map(NYA_dataset[names_to_use], as.factor)
 
-
+###Neural network 1 
 #Using numeric to turn the rpom types to numeric values ~~~~~~~
 NYA_numeric <- NYA_dataset
 NYA_numeric[,3]<-as.numeric(NYA_numeric[,3]) - 1
