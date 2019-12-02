@@ -3,23 +3,16 @@ set.seed(123)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
-library(GGally)
-library(ggExtra)
-library(caret)
-library(glmnet)
-library(leaflet)
 library(plotly)
 library(class)
 library(scatterplot3d)
+library(corrplot)
 
 source("plot_functions.R")
 
 NYAirbnb <- read.csv("AB_NYC_2019.csv", encoding = "UTF-8", stringsAsFactors = F, na.strings = c("")) # Reads the dataset
 
 # Why use NA Ref: https://www.statmethods.net/input/missingdata.html
-#NYAirbnb[, 16][NYAirbnb[, 16] == 0] <- NA # Sets all the 0 values in latitude to NA
-
-#NYAirbnb <- NYAirbnb[complete.cases(NYAirbnb[,16]),] # Gets rid of the rows with latitude = NA
 
 names_to_delete <- c("id","host_id","number_of_reviews","last_review","reviews_per_month")
 NYAirbnb[names_to_delete] <- NULL 
@@ -32,7 +25,7 @@ NYAirbnb[names_to_factor]<-map(NYAirbnb[names_to_factor], as.factor)
 M <- NYAirbnb[,sapply(NYAirbnb, is.numeric)]
 M <- M[complete.cases(M),]
 corr_matr <- cor(M,method = "pearson")
-corrplot(corr_matr, method = "color")
+corrplot(corr_matr, method = "color", tl.cex = 0.7)
 
 
 
@@ -105,8 +98,6 @@ price<-Shared_room$price
 latitude<-Shared_room$latitude
 longitude<-Shared_room$longitude
 
-plot(longitude,latitude,col=Shared_room$neighbourhood_group, main = "Shared Rooms")
-neighbourhood_leg()
 scatter(longitude,latitude,Shared_room$neighbourhood_group,"Shared Rooms", "Neighbourhood")
 #------------------- Plots for Price -------------------------#
 
@@ -124,14 +115,14 @@ mean_ng <- NYA_rand %>%
 p <- dist(NYA_rand,mean_ng,~neighbourhood_group)
 print(p)
 
-ng_mean <- log_dist(NYA_rand, mean_ng, "Mean= £",~neighbourhood_group)
+ng_mean <- log_dist(NYA_rand, mean_ng, "Mean= $",~neighbourhood_group)
 print(ng_mean)
 
 median_ng <- NYA_rand %>%
   group_by(neighbourhood_group) %>%
   summarise(price = round(median.default(price),2))
 
-ng_median <- log_dist(NYA_rand, median_ng, "Median= £",~neighbourhood_group)
+ng_median <- log_dist(NYA_rand, median_ng, "Median= $",~neighbourhood_group)
 print(ng_median)
 
 
@@ -139,7 +130,7 @@ mean_rt <- NYA_rand %>%
   group_by(room_type) %>%
   summarise(price = round(mean(price),2))
 
-rt_mean <- log_dist(NYA_rand, mean_rt, "Mean= £", ~room_type)
+rt_mean <- log_dist(NYA_rand, mean_rt, "Mean= $", ~room_type)
 print(rt_mean)
 
 median_rt <- NYA_rand %>%
@@ -147,7 +138,7 @@ median_rt <- NYA_rand %>%
   summarise(price = round(median.default(price),2))
 
 
-rt_median <- log_dist(NYA_rand, median_rt, "Median= £", ~room_type)
+rt_median <- log_dist(NYA_rand, median_rt, "Median= $", ~room_type)
 print(rt_median)
 
 
