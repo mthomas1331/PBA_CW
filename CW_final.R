@@ -39,14 +39,15 @@ MODEL_NN_2 <- "Model_NN_2.rds"
 #https://github.com/hanhanwu/Hanhan_Data_Science_Practice/blob/master/AI_Experiments/R_neural_network_basics.R
 #https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
 neural_network_2  <- function(dataset) {
+  #plit the dataset into training and testing - 70:30 split
   index <- createDataPartition(dataset$price, p = DATA_SPLIT, list = FALSE)
   train_data <- dataset[index,]
-  glimpse(train_data)
+  #glimpse(train_data)
   test_data <- dataset[-(index),]
-  glimpse(test_data)
+  #glimpse(test_data)
   max_val <- apply(dataset,2,max)
   min_val <- apply(dataset, 2, min)
-  dataset_scaled <- as.data.table(scale(dataset, center = min_val, 
+  dataset_scaled <- as.data.frame(scale(dataset, center = min_val, 
                                         scale = max_val - min_val))
   #print(summarizeColumns(dataset_scaled))
   #glimpse(dataset_scaled)
@@ -93,19 +94,27 @@ neural_network_2  <- function(dataset) {
   plot(test_data$price, unscaled_predict_NN, col = 'blue', pch = 4, ylab = "Prediction values", xlab = "Real values")
   abline(0,1,lwd=2)
   RMSE_NN <- sqrt(sum(test_data$price - unscaled_predict_NN)^2) / nrow(test_data)
+  MSE_NN <- sum(test_data$price - unscaled_predict_NN)^2 / nrow(test_data)
   print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK: " ,RMSE_NN)) # Root MEAN SQUARE ERROR 
+  print(paste("MEAN SQUARE ERROR FOR NEURAL NETWORK: " ,MSE_NN)) # Root MEAN SQUARE ERROR 
+  
   
   #Performance measure for second neural network
   plot(NN_model_2)
   predict_NN_2 <- neuralnet::compute(NN_model_2, testNN[,c(1:2,5:6)])
   unscaled_predict_NN_2<- predict_NN_2$net.result * (max(dataset$price) - min(dataset$price)) + 
-    min(dataset$price)
+    min(dataset$price) # return the scaled data we used back to the original form 
+  #result <- data.frame(test_data$price,unscaled_predict_NN) #view the results of the prediction vs test
+  #print(result)
   
   ##plot prediction and test values 
   plot(test_data$price, unscaled_predict_NN_2, col = 'red', pch = 4, ylab = "Prediction values", xlab = "Real values")
   abline(0,1,lwd=2)
   RMSE_NN_2 <- sqrt(sum(test_data$price - unscaled_predict_NN_2)^2) / nrow(test_data)
+  MSE_NN_2 <- sum(test_data$price - unscaled_predict_NN_2)^2 / nrow(test_data)
+  
   print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK 2: " ,RMSE_NN_2)) # Root MEAN SQUARE ERROR 
+  print(paste("MEAN SQUARE ERROR FOR NEURAL NETWORK 2: " ,MSE_NN_2)) # Root MEAN SQUARE ERROR 
   
 }
 
@@ -193,7 +202,6 @@ main <- function() {
   NYA_dataset[names_to_delete] <- NULL
   #glimpse(NYA_dataset) #should be 6 columns at this point 
   
-
   #Using numeric to turn the rpom types to numeric values ~~~~~~~
   NYA_numeric <- NYA_dataset
   NYA_numeric[,3]<-as.numeric(NYA_numeric[,3]) - 1
@@ -201,27 +209,9 @@ main <- function() {
   NYA_matrix <- as.matrix(NYA_numeric)
   #glimpse(NYA_matrix)
   dimnames(NYA_matrix) <- NULL
-  #print(NYA_matrix)
-  #NYA_matrix_norm <- tensorflow::normalize(NYA_matrix)
-  #glimpse(NYA_matrix_norm)
 
-  NN_second<-neural_network_2(NYA_numeric) #Code here for best neural network 
+  NN_second<-neural_network_2(NYA_numeric) #call neural network function 
   
-  #END OF ALTERNTIVE TESTING ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-  #~~~~CALL TO ORIGINAL NEURAL NETWORK FUNCTION~~~~~~~~~~~~~~~~#
-  # names_to_use <- c("room_type")
-  # NYA_dataset[names_to_use]<-map(NYA_dataset[names_to_use], as.factor)
-  # 
-  # NYA_dataset[names_to_use]<-NULL
-  # 
-  # price<-data.frame(NYA_dataset$price)
-  # NYA_dataset[c("price")]<-NULL
-  # NYA_normalise<-data.frame(NYA_dataset,price)
-  # print("START NEURAL NETWORK 1")
-  # NN_original<-neural_network(NYA_normalise) # Original neural network 
-  # print("END OF NEURAL NETWORK 1")
-
 }
 
 # clears the console area 
