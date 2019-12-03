@@ -46,18 +46,15 @@ MODEL_NN_2 <- "Model_NN_2.rds"
 #https://github.com/hanhanwu/Hanhan_Data_Science_Practice/blob/master/AI_Experiments/R_neural_network_basics.R
 #https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
 neural_network_2  <- function(dataset) {
-  #plit the dataset into training and testing - 70:30 split
+  #split the dataset into training and testing - 70:30 split
   index <- createDataPartition(dataset$price, p = DATA_SPLIT, list = FALSE)
   train_data <- dataset[index,]
-  #glimpse(train_data)
   test_data <- dataset[-(index),]
-  #glimpse(test_data)
+  
   max_val <- apply(dataset,2,max)
   min_val <- apply(dataset, 2, min)
   dataset_scaled <- as.data.frame(scale(dataset, center = min_val, 
                                         scale = max_val - min_val))
-  #print(summarizeColumns(dataset_scaled))
-  #glimpse(dataset_scaled)
   
   trainNN <- dataset_scaled[index,]
   testNN <- dataset_scaled[-index,]
@@ -66,7 +63,7 @@ neural_network_2  <- function(dataset) {
   # code to save model to save time 
   if (file.exists(MODEL_NN_1)) {
     print("Loading neural network model file")
-    #load(NNMODEL)
+    
     NN_model <- readRDS(MODEL_NN_1)
     plot(NN_model)
   } else {
@@ -97,7 +94,7 @@ neural_network_2  <- function(dataset) {
   unscaled_predict_NN<- predict_NN$net.result * (max(dataset$price) - min(dataset$price)) + 
     min(dataset$price)
   
-  ##plot prediction and test values 
+  #plot prediction and test values 
   plot(test_data$price, unscaled_predict_NN, col = 'blue', pch = 4, ylab = "Prediction values", xlab = "Real values")
   abline(0,1,lwd=2)
   RMSE_NN <- sqrt(sum(test_data$price - unscaled_predict_NN)^2) / nrow(test_data)
@@ -111,8 +108,6 @@ neural_network_2  <- function(dataset) {
   predict_NN_2 <- neuralnet::compute(NN_model_2, testNN[,c(1:2,5:6)])
   unscaled_predict_NN_2<- predict_NN_2$net.result * (max(dataset$price) - min(dataset$price)) + 
     min(dataset$price) # return the scaled data we used back to the original form 
-  #result <- data.frame(test_data$price,unscaled_predict_NN) #view the results of the prediction vs test
-  #print(result)
   
   ##plot prediction and test values 
   plot(test_data$price, unscaled_predict_NN_2, col = 'red', pch = 4, ylab = "Prediction values", xlab = "Real values")
@@ -147,7 +142,6 @@ knn_model <- function(dataset) {
   test.NYA_rand_labels <- NYA_rand.subset[-dat.d,1]
   
   knn.10 <- knn(train=train.NYA_rand, test=test.NYA_rand, cl=train.NYA_rand_labels, k=4)
-  #print(summary(knn.10))
   
   ACC.10 <- 100 * sum(test.NYA_rand_labels == knn.10) / NROW (test.NYA_rand_labels)
   
@@ -156,8 +150,6 @@ knn_model <- function(dataset) {
   for (i in 1:50) {
     knn.mod <- knn(train=train.NYA_rand, test=test.NYA_rand, cl=train.NYA_rand_labels, k=i)
     k.optm[i] <- 100 * sum(test.NYA_rand_labels == knn.mod) / NROW (test.NYA_rand_labels)
-    #k=i
-    #cat(k, '=', k.optm[i], '\n')
   }
   
   plot(k.optm, type='b', xlab="K- Value", ylab="Accuracy level")
@@ -280,10 +272,6 @@ plot_graphs <- function(sampled_dataset) {
   
   rt_median <- log_dist(sampled_dataset, median_rt, MEDIAN_TITLE, ~room_type)
   print(rt_median)
-  
-  
-  
-  
   
 }
 
