@@ -40,11 +40,20 @@ NN_MODEL_5H <- "NN_model_5H.rds"
 MODEL_NN_1 <- "Model_NN_1.rds"
 MODEL_NN_2 <- "Model_NN_2.rds"
 
-#This code has been adapted to suit this dataset 
-#sources used here:  
-#https://rpubs.com/julianhatwell/annr
-#https://github.com/hanhanwu/Hanhan_Data_Science_Practice/blob/master/AI_Experiments/R_neural_network_basics.R
-#https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
+#***************************************************************
+# neural_network_2() :
+#
+# This function goes through the process of creating, processing and evaluating neural network 
+#
+# INPUT   :  dataset      - dataset    -  Dataset that was randomised and consists of 14,000 rows of data
+#         
+#
+# OUTPUT  :  Multiple plots which show neural network info and prints performance measures to console
+#
+# SOURCE  :  https://rpubs.com/julianhatwell/annr
+#         :  https://github.com/hanhanwu/Hanhan_Data_Science_Practice/blob/master/AI_Experiments/R_neural_network_basics.R
+#         :  https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/
+#***************************************************************
 neural_network_2  <- function(dataset) {
   #split the dataset into training and testing - 70:30 split
   index <- createDataPartition(dataset$price, p = DATA_SPLIT, list = FALSE)
@@ -109,7 +118,7 @@ neural_network_2  <- function(dataset) {
   unscaled_predict_NN_2<- predict_NN_2$net.result * (max(dataset$price) - min(dataset$price)) + 
     min(dataset$price) # return the scaled data we used back to the original form 
   
-  ##plot prediction and test values 
+  #plot prediction and test values 
   plot(test_data$price, unscaled_predict_NN_2, col = 'red', pch = 4, ylab = "Prediction values", xlab = "Real values")
   abline(0,1,lwd=2)
   RMSE_NN_2 <- sqrt(sum(test_data$price - unscaled_predict_NN_2)^2) / nrow(test_data)
@@ -120,19 +129,33 @@ neural_network_2  <- function(dataset) {
   
 }
 
-#kNN algorithm ###
-#Code used from the source
-#source - https://www.edureka.co/blog/knn-algorithm-in-r/
+
+#***************************************************************
+# knn_model() :
+#
+# Classifies prices for Airbnbs using longitude and latitude
+#
+# INPUT   :  dataset      - dataset    -  Dataset used to get the data
+#         
+# OUTPUT  :  graph showing accuracies for different values of k
+#
+# Source  : https://www.edureka.co/blog/knn-algorithm-in-r/
+#***************************************************************
 knn_model <- function(dataset) {
   set.seed(123)
+  
+  # creating subset of input with only price, latitude and longitude as columns
   NYA_rand <- dataset
   NYA_rand.subset <- NYA_rand[c('price', 'latitude', 'longitude')]
   
+  # function  used to normalised dataset
   normalize <- function(x) {
     return ((x - min(x)) / (max(x) - min(x))) }
   
+  # Normalised latitude and longitude
   NYA_rand.subset.n <- as.data.frame(lapply(NYA_rand.subset[,2:3], normalize))
 
+  # Split data 70:30 for training and testing
   dat.d <- sample(1:nrow(NYA_rand.subset.n), size=nrow(NYA_rand.subset.n)*DATA_SPLIT, replace=FALSE)
   
   train.NYA_rand <- NYA_rand.subset[dat.d,]
@@ -141,10 +164,7 @@ knn_model <- function(dataset) {
   train.NYA_rand_labels <- NYA_rand.subset[dat.d,1]
   test.NYA_rand_labels <- NYA_rand.subset[-dat.d,1]
   
-  knn.10 <- knn(train=train.NYA_rand, test=test.NYA_rand, cl=train.NYA_rand_labels, k=4)
-  
-  ACC.10 <- 100 * sum(test.NYA_rand_labels == knn.10) / NROW (test.NYA_rand_labels)
-  
+  # for loop to train and test the algorithm for different k-values 
   i=1
   k.optm=1
   for (i in 1:50) {
@@ -152,10 +172,21 @@ knn_model <- function(dataset) {
     k.optm[i] <- 100 * sum(test.NYA_rand_labels == knn.mod) / NROW (test.NYA_rand_labels)
   }
   
+  # graph plotted for different accuracies and k-values
   plot(k.optm, type='b', xlab="K- Value", ylab="Accuracy level")
   
 }
 
+#***************************************************************
+# pre_processing_data() :
+#
+# Pre processes the original dataset to be used 
+#
+# INPUT   :  dataset      - dataset    -  Original dataset to be pre-processed
+#         
+# OUTPUT  :  dataset      - NYA_rand   -  Processed dataset
+#
+#***************************************************************
 pre_processing_data <- function(dataset) {
   
   NYAirbnb <- dataset
@@ -184,7 +215,17 @@ pre_processing_data <- function(dataset) {
   
   return(NYA_rand)
 }
-
+#***************************************************************
+# plot_graphs() :
+#
+# It plots Scatter graphs and Histograms using pre processed dataset
+#
+# INPUT   :  dataset      - sample_dataset    -  Pre-processed dataset
+#         
+# OUTPUT  :  Scatter graphs and Histograms
+#
+# Source  :  plot_functions.R
+#***************************************************************
 plot_graphs <- function(sampled_dataset) {
   
   index <- nrow(sampled_dataset)*DATA_SPLIT
@@ -239,7 +280,7 @@ plot_graphs <- function(sampled_dataset) {
   
   scatter(longitude,latitude,heat.colors(price),PRICE, "")
   
-  #-----------------------------Distribution Code----------------------#
+  #------------------Histogram Distribution Code----------------------#
   mean_ng <- sampled_dataset %>%
     group_by(neighbourhood_group) %>%
     summarise(price = round(mean(price), 2))
@@ -293,7 +334,7 @@ main <- function() {
   NYA_dataset[names_to_delete] <- NULL
   #should be 6 columns at this point 
   
-  #Using numeric to turn the rpom types to numeric values ~~~~~~~
+  #Using numeric to turn the rpom types to numeric values
   NYA_numeric <- NYA_dataset
   NYA_numeric[,3]<-as.numeric(NYA_numeric[,3]) - 1
   NYA_matrix <- as.matrix(NYA_numeric)
