@@ -26,7 +26,14 @@ ROOM_TYPE <- "room_type"
 HOST_NAME <- "host_name"
 NEIGHBOURHOOD_GROUP <- "neighbourhood_group"
 NEIGHBOURHOOD <- "neighbourhood"
+ENTIRE_HOME <-"Entire home/apt"
+PRIVATE_ROOM <- "Private room"
+SHARED_ROOM <- "Shared room"
+PRICE <- "Price"
 
+MEAN_TITLE <- "Mean = $"
+MEDIAN_TITLE <- "Median = $"
+  
 DATA_SPLIT <- 0.7
 NN_MODEL_TEST <- "NN_model_test.rds"
 NN_MODEL_5H <- "NN_model_5H.rds"
@@ -160,12 +167,12 @@ knn_model <- function(dataset) {
 pre_processing_data <- function(dataset) {
   
   NYAirbnb <- dataset
-  names_to_delete <- c("id","host_id","number_of_reviews","last_review","reviews_per_month")
+  names_to_delete <- c(ID,HOST_ID,NUMBER_OF_REVIEWS,LAST_REVIEW,REVIEWS_PER_MONTH)
   NYAirbnb[names_to_delete] <- NULL 
   NYAirbnb<-NYAirbnb %>% filter(availability_365>0)
   NYAirbnb<-NYAirbnb %>% filter(price>0)
   
-  names_to_factor<-c("host_name","neighbourhood_group","neighbourhood","room_type")
+  names_to_factor<-c(HOST_NAME,NEIGHBOURHOOD_GROUP,NEIGHBOURHOOD,ROOM_TYPE)
   NYAirbnb[names_to_factor]<-map(NYAirbnb[names_to_factor], as.factor)
   
   #-------------Getting rid of outliers--------------------#
@@ -186,11 +193,107 @@ pre_processing_data <- function(dataset) {
   return(NYA_rand)
 }
 
+plot_graphs <- function(sampled_dataset) {
+  
+  index <- nrow(sampled_dataset)*DATA_SPLIT
+  training_data <- sampled_dataset[1:index,]
+  testing_data <- sampled_dataset[-(1:index),]
+  
+  lon <- sampled_dataset$longitude
+  lat <- sampled_dataset$latitude
+  price <- sampled_dataset$price
+  plot_3d(lon,lat,price)
+  
+  # Generates subsets based on room_type
+  Entire_home <- training_data[training_data$room_type == ENTIRE_HOME,] # Subset for Entire home/apt
+  Private_room <- training_data[training_data$room_type == PRIVATE_ROOM,] # Subset for Private Room
+  Shared_room <- training_data[training_data$room_type == SHARED_ROOM,] # Subset for Shared Room
+  
+  # ----------------------Plot by room type---------------#
+  
+  price<-training_data$price
+  latitude<-training_data$latitude
+  longitude<-training_data$longitude
+  
+  scatter(longitude,latitude,training_data$room_type,"Room Type", "Room")
+  
+  #------------------- Plots for Entire Home -------------------------#
+  
+  price<-Entire_home$price
+  latitude<-Entire_home$latitude
+  longitude<-Entire_home$longitude
+  
+  scatter(longitude, latitude, Entire_home$neighbourhood_group, ENTIRE_HOME, NEIGHBOURHOOD)
+  #------------------- Plots for Private Rooms -------------------------#
+  
+  price<-Private_room$price
+  latitude<-Private_room$latitude
+  longitude<-Private_room$longitude
+  
+  scatter(longitude,latitude,Private_room$neighbourhood_group,PRIVATE_ROOM, NEIGHBOURHOOD)
+  
+  #------------------- Plots for Shared Rooms -------------------------#
+  
+  price<-Shared_room$price
+  latitude<-Shared_room$latitude
+  longitude<-Shared_room$longitude
+  
+  scatter(longitude,latitude,Shared_room$neighbourhood_group,SHARED_ROOM, NEIGHBOURHOOD)
+  #------------------- Plots for Price -------------------------#
+  
+  price<-training_data$price
+  latitude<-training_data$latitude
+  longitude<-training_data$longitude
+  
+  scatter(longitude,latitude,heat.colors(price),PRICE, "")
+  
+  #-----------------------------Distribution Code----------------------#
+  mean_ng <- sampled_dataset %>%
+    group_by(neighbourhood_group) %>%
+    summarise(price = round(mean(price), 2))
+  
+  p <- dist(sampled_dataset,mean_ng,~neighbourhood_group)
+  print(p)
+  
+  ng_mean <- log_dist(sampled_dataset, mean_ng, MEAN_TITLE,~neighbourhood_group)
+  print(ng_mean)
+  
+  median_ng <- sampled_dataset %>%
+    group_by(neighbourhood_group) %>%
+    summarise(price = round(median.default(price),2))
+  
+  ng_median <- log_dist(sampled_dataset, median_ng, MEDIAN_TITLE,~neighbourhood_group)
+  print(ng_median)
+  
+  
+  mean_rt <- sampled_dataset %>%
+    group_by(room_type) %>%
+    summarise(price = round(mean(price),2))
+  
+  rt_mean <- log_dist(sampled_dataset, mean_rt, MEAN_TITLE, ~room_type)
+  print(rt_mean)
+  
+  median_rt <- sampled_dataset %>%
+    group_by(room_type) %>%
+    summarise(price = round(median.default(price),2))
+  
+  
+  rt_median <- log_dist(sampled_dataset, median_rt, MEDIAN_TITLE, ~room_type)
+  print(rt_median)
+  
+  
+  
+  
+  
+}
+
 main <- function() {
   
   NYAirbnb <- read.csv(AIRBNB_FILENAME, encoding = "UTF-8", stringsAsFactors = F, na.strings = c("")) # Reads the dataset
   
   NYA_rand<-pre_processing_data(NYAirbnb)
+
+  plot_graphs(NYA_rand)
   
   ##kNN algortihm 
   knn_model(NYA_rand)
@@ -200,14 +303,12 @@ main <- function() {
   #Reducing number of columns we need to process
   names_to_delete<-c("name", "host_name", "neighbourhood_group", "neighbourhood", "calculated_host_listings_count")
   NYA_dataset[names_to_delete] <- NULL
-  #glimpse(NYA_dataset) #should be 6 columns at this point 
+  #should be 6 columns at this point 
   
   #Using numeric to turn the rpom types to numeric values ~~~~~~~
   NYA_numeric <- NYA_dataset
   NYA_numeric[,3]<-as.numeric(NYA_numeric[,3]) - 1
-  #glimpse(NYA_numeric)
   NYA_matrix <- as.matrix(NYA_numeric)
-  #glimpse(NYA_matrix)
   dimnames(NYA_matrix) <- NULL
 
   NN_second<-neural_network_2(NYA_numeric) #call neural network function 

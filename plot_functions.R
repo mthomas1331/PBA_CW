@@ -16,7 +16,7 @@
 
 scatter <- function(lon,lat,type,title, leg){
   plot(x = lon,y = lat, col = type, main = title)
-  if(leg == "Neighbourhood") {
+  if(leg == "neighbourhood") {
     legend("topleft", legend=c("Brooklyn","Manhattan","Queens","Staten Island","Bronx") , pch= 1, col=c("Red","Green","Blue","Cyan","Black"), cex = 0.75, pt.cex = 1.5)
   }
   else if(leg == "Room") {

@@ -27,9 +27,6 @@ M <- M[complete.cases(M),]
 corr_matr <- cor(M,method = "pearson")
 corrplot(corr_matr, method = "color", tl.cex = 0.7)
 
-
-
-
 lon <- NYAirbnb$longitude
 lat <- NYAirbnb$latitude
 price <- NYAirbnb$price
@@ -50,12 +47,19 @@ NYAirbnb<-NYAirbnb[!(NYAirbnb$price > upperlim),]
 NYAirbnb <- NYAirbnb[sample(nrow(NYAirbnb)),] # Randomise order of dataframe
 NYA_rand <- NYAirbnb[1:14000,]
 
-NYA_rand<-NYA_rand %>% mutate(id = row_number())
 
-training_data<-NYA_rand %>% sample_frac(.7) %>% filter(price > 0)
-testing_data<-anti_join(NYA_rand, training_data
-                        , by = 'id') %>% filter(price > 0)
 
+#index <- createDataPartition(NYA_rand, p = 0.7, list = FALSE)
+
+
+#max_val <- apply(NYA_rand,2,max)
+#min_val <- apply(NYA_rand, 2, min)
+#NYA_rand <- as.data.frame(scale(NYA_rand, center = min_val, 
+#                                      scale = max_val - min_val))
+index <- nrow(NYA_rand)*0.7
+print(index)
+training_data <- NYA_rand[1:9800,]
+testing_data <- NYA_rand[-(1:9800),]
 
 lon <- NYA_rand$longitude
 lat <- NYA_rand$latitude
@@ -73,7 +77,6 @@ Shared_room <- training_data[training_data$room_type == 'Shared room',] # Subset
 price<-training_data$price
 latitude<-training_data$latitude
 longitude<-training_data$longitude
-room_type<-training_data$room_type
 
 scatter(longitude,latitude,training_data$room_type,"Room Type", "Room")
 
