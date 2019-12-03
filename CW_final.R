@@ -99,8 +99,8 @@ neural_network_2  <- function(dataset) {
   abline(0,1,lwd=2)
   RMSE_NN <- sqrt(sum(test_data$price - unscaled_predict_NN)^2) / nrow(test_data)
   MSE_NN <- sum(test_data$price - unscaled_predict_NN)^2 / nrow(test_data)
-  print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK: " ,RMSE_NN)) # Root MEAN SQUARE ERROR 
   print(paste("MEAN SQUARE ERROR FOR NEURAL NETWORK: " ,MSE_NN)) # Root MEAN SQUARE ERROR 
+  print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK: " ,RMSE_NN)) # Root MEAN SQUARE ERROR 
   
   
   #Performance measure for second neural network
@@ -115,8 +115,8 @@ neural_network_2  <- function(dataset) {
   RMSE_NN_2 <- sqrt(sum(test_data$price - unscaled_predict_NN_2)^2) / nrow(test_data)
   MSE_NN_2 <- sum(test_data$price - unscaled_predict_NN_2)^2 / nrow(test_data)
   
-  print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK 2: " ,RMSE_NN_2)) # Root MEAN SQUARE ERROR 
   print(paste("MEAN SQUARE ERROR FOR NEURAL NETWORK 2: " ,MSE_NN_2)) # Root MEAN SQUARE ERROR 
+  print(paste("ROOT MEAN SQUARE ERROR FOR NEURAL NETWORK 2: " ,RMSE_NN_2)) # Root MEAN SQUARE ERROR 
   
 }
 
@@ -244,8 +244,8 @@ plot_graphs <- function(sampled_dataset) {
     group_by(neighbourhood_group) %>%
     summarise(price = round(mean(price), 2))
   
-  p <- dist(sampled_dataset,mean_ng,~neighbourhood_group)
-  print(p)
+  ng_mean <- dist(sampled_dataset,mean_ng,~neighbourhood_group)
+  print(ng_mean)
   
   ng_mean <- log_dist(sampled_dataset, mean_ng, MEAN_TITLE,~neighbourhood_group)
   print(ng_mean)

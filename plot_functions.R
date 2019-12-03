@@ -48,6 +48,19 @@ plot_3d <- function(lon,lat,price) {
 
 
 
+#***************************************************************
+# dist() :
+#
+# This function will generate Histogram to represent the Distribution of price
+#
+# INPUT   :  dataset      - dataset    -  Dataset used to get the data
+#         :  list         - measure    -  Whether it prints out Mean or Median
+#         :  column name  - group      -  Which column to look at e.g. Room Type or Neighbourhood group
+#         
+#
+# OUTPUT  :  3D Scatter graph  -   Outputs multiple histograms based on how many different elements in group with measure value printed on it
+#
+#***************************************************************
 
 dist <- function(dataset,measure,group) {
   ggplot(dataset, aes(price)) + 
@@ -60,6 +73,19 @@ dist <- function(dataset,measure,group) {
 }
   
 
+#***************************************************************
+# log_dist() :
+#
+# This function will generate Histogram to represent the Distribution of price with log10 transformation applied
+#
+# INPUT   :  dataset      - dataset    -  Dataset used to get the data
+#         :  list         - measure    -  Whether it prints out Mean or Median
+#         :  column name  - group      -  Which column to look at e.g. Room Type or Neighbourhood group
+#         :  character    - title      -  Prints out the the title of the Histogram
+#
+# OUTPUT  :  3D Scatter graph  -   Outputs multiple histograms based on how many different elements in group with measure value printed on it
+#
+#***************************************************************
 log_dist <- function(dataset, measure,title,group) {
   ggplot(dataset, aes(price)) + 
     geom_histogram(bins = 30, aes(y = ..density..), fill = "purple") + 
